@@ -1,0 +1,24 @@
+{
+    "name": "Pickens",
+    "description": "Pickens is a simple CMS written with Slim that uses markdown files for content. Inspired by github pages.",
+    "version": "0.0.1",
+    "homepage": "https://github.com/daggerhart/pickens",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jonathan Daggerhart",
+            "email": "jonathan@daggerhart.com",
+            "homepage": "http://daggerhart.com",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/daggerhart/pickens/issues",
+        "wiki": "https://github.com/daggerhart/pickens/wiki"
+    },
+    "require": {
+        "slim/slim": "^3.0@RC",
+        "slim/twig-view": "^2.0",
+        "erusev/parsedown": "^1.6"
+    }
+}

@@ -2,10 +2,12 @@
 error_reporting( E_ALL );
 ini_set( 'display_errors', 1 );
 
-require 'vendor/autoload.php';
+require '../vendor/autoload.php';
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+
+$config = parse_ini_file( '../app/pickens.ini', true );
 
 // http://www.slimframework.com/docs/features/templates.html
 // Create container
@@ -13,8 +15,8 @@ $container = new \Slim\Container;
 
 // Register component on container
 $container['view'] = function( $c ) {
-	$view = new \Slim\Views\Twig('app/templates/', [
-		//'cache' => 'cache'
+	$view = new \Slim\Views\Twig('../templates/', [
+		//'cache' => '../cache'
 	]);
 	$view->addExtension(new \Slim\Views\TwigExtension(
 		$c['router'],
@@ -24,33 +26,36 @@ $container['view'] = function( $c ) {
 	return $view;
 };
 // markdown parsedown
-$container['parser'] = function( $c ){
-	return new \Parsedown;
-};
+$container['parser'] = new \Parsedown;
 
 $app = new \Slim\App($container);
+
+$app->add( new \Pickens\Collections( $config['collections'] ) );
+$app->add( new \Pickens\Taxonomies( $config['taxonomies'] ) );
+//$app->add( new \Pickens\Features );
+//$app->add( new \Pickens\MetaData );
 
 /**
  * Pages
  */
-$app->get('/', function ($request, $response, $args ){
-	$filepath = 'app/content/pages/index.md';
+$app->get('/', function ($request, $response, $args ) use ( $config ){
+	$filepath = '../content/pages/index.md';
 
 	if ( file_exists( $filepath ) ){
 		$data = get_route_data( $this, $filepath );
 		$data['content'] = parse_content( $this, $data['content'] );
-		return template_content( $this, $response, $data );
+		return template_content( $this, $response, $data, $config );
 	}
 
 	return $response;
 });
-$app->get( '/{slug}', function ($request, $response, $args ){
-	$filepath = 'app/content/pages/'.$args['slug'].'.md';
+$app->get( '/{slug}', function ($request, $response, $args ) use ( $config ){
+	$filepath = '../content/pages/'.$args['slug'].'.md';
 
 	if ( file_exists( $filepath ) ){
 		$data = get_route_data( $this, $filepath );
 		$data['content'] = parse_content( $this, $data['content'] );
-		return template_content( $this, $response, $data );
+		return template_content( $this, $response, $data, $config );
 	}
 
 	return $response;
@@ -61,13 +66,13 @@ $app->get( '/{slug}', function ($request, $response, $args ){
  * Posts
  */
 // Render Twig template in route
-$app->get('/post/{slug}', function ($request, $response, $args) {
-	$filepath = 'app/content/posts/'.$args['slug'].'.md';
+$app->get('/post/{slug}', function ($request, $response, $args)  use ( $config ){
+	$filepath = '../content/posts/'.$args['slug'].'.md';
 
 	if ( file_exists( $filepath ) ){
 		$data = get_route_data( $this, $filepath );
 		$data['content'] = parse_content( $this, $data['content'] );
-		return template_content( $this, $response, $data );
+		return template_content( $this, $response, $data, $config );
 	}
 
 	return $response;
@@ -143,7 +148,7 @@ function parse_content( $app, $content ){
  *
  * @return mixed
  */
-function template_content( $app, $response, $data ){
+function template_content( $app, $response, $data, $config ){
 	return $app->view->render( $response, 'layout.html', [
 		'meta' => $data['meta'],
 		'title' => $data['meta']['title'],
@@ -151,6 +156,6 @@ function template_content( $app, $response, $data ){
 		'category' => $data['meta']['category'],
 		'tags' => $data['meta']['tags'],
 		'content' => $data['content'],
-		'data' => print_r( $data, 1 )
+		'data' => print_r( $data, 1 ) . print_r( $config , 1 )
 	]);
 }

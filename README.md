@@ -63,7 +63,13 @@ Property | Description
 
 Property | Description
 ---|---
-`file` | Location of the content's file
+`type` | Collection content belongs to
+`type_slug` | Slug for the collection content belongs to
+`alias` | Content's uri alias
+`filepath` | Full filepath to the content
+`filename` | File name for the content
+`filedir` | Directory content can be found int
+`file_slug` | File name without the file extension
 `template` | Found template for this content 
 
 ## Middleware
@@ -80,7 +86,7 @@ Profile:  $request, $response, $next (callable)
 
 #### Find the appropriate content & load it
 
-External Route | Internal Route | Description
+Alias | Internal Route | Description
 ---|---|---
 `/<collection-slug>` | `/collection/<collection-slug>` |  Serve a <setting> amount of a collection
 `/<page-slug>` | `/page/<page-slug>` | Serve a single page 
@@ -91,7 +97,7 @@ External Route | Internal Route | Description
 
 **Examples**
 
-External Route | Internal Route | Description
+Alias | Internal Route | Description
 ---|---|---
 `/posts` | `/collection/posts` | List of <setting> posts 
 `/my-first-page` | `/page/my-first-page` | A page with a filename following this pattern: `content/pages/my-first-page.md`

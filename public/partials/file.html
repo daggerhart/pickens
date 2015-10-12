@@ -1,0 +1,122 @@
+<div class="file-details" ng-model="files">
+
+    <div class="page-header">
+        <h1>{{ file.fileName }} <small>({{ file.fileSize | bytes }})</small></h1>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3">
+            <a href="/#list">&laquo; Back to list</a>
+
+            <h3>Meta Data</h3>
+            <div class="meta-data list-group">
+                <div class="list-group-item" ng-repeat="(key, value) in file.data.meta">
+                    <h4 class="list-group-item-heading">{{ key }}</h4>
+
+                    <p class="list-group-item-text">{{ value }}</p>
+                </div>
+            </div>
+
+            <h3>File Info</h3>
+            <div class="file-info list-group">
+                <div class="list-group-item">
+                    <h4 class="list-group-item-heading">Mime Type</h4>
+                    <p class="list-group-item-text">{{ file.mimeType }}</p>
+                </div>
+                <div class="list-group-item">
+                    <h4 class="list-group-item-heading">Modified</h4>
+                    <p class="list-group-item-text">{{ file.modified * 1000 | date:'medium'}}</p>
+                </div>
+                <div class="list-group-item">
+                    <h4 class="list-group-item-heading">File Size</h4>
+                    <p class="list-group-item-text">{{ file.fileSize | bytes }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-9">
+
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="file-action-buttons btn-group pull-right">
+                        <button
+                            type="button"
+                            id="view-file-contents"
+                            class="btn btn-default"
+                            ng-class="{ active : !is_editing }"
+                            ng-click="is_editing = false">
+                            <i class="glyphicon glyphicon-eye-open" aria-hidden="true"></i>
+                            View
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-default"
+                            ng-class="{ 'btn-warning' : is_editing, active : is_editing }"
+                            ng-click="is_editing = true">
+                            <i class="glyphicon glyphicon-pencil" aria-hidden="true"></i>
+                            Edit
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default" ng-class="{ 'panel-warning' : (is_editing && !is_saved), 'panel-success' : is_saved }">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{{ file.relativePath }}</h3>
+                </div>
+
+                <div class="panel-body">
+                    <form ng-show="is_editing" ng-submit="submit()" method="post">
+
+                        <div class="row file-edit-button-row">
+                            <div class="col-xs-12">
+                                <div class="btn-group pull-left">
+                                    <button
+                                        type="button"
+                                        id="preview-file-contents"
+                                        class="btn btn-default"
+                                        ng-click="is_previewing = !is_previewing; preview()"
+                                        ng-class="{ active: is_previewing, 'disabled' : is_saved }">
+                                        <i class="glyphicon glyphicon-sunglasses" aria-hidden="true"></i>
+                                        Preview
+                                    </button>
+                                </div>
+                                <div class="btn-group pull-right">
+                                    <button
+                                        class="btn"
+                                        ng-class="{ 'btn-primary' : is_editing, 'btn-success' : is_saved }">
+                                        <i class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></i>
+                                        Save
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-default"
+                                        ng-click="editCancel()"
+                                        ng-class="{ 'disabled' : is_saved }">
+                                        <i class="glyphicon glyphicon-ban-circle" aria-hidden="true"></i>
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <textarea name="full"
+                                  class="form-control"
+                                  rows="20"
+                                  ng-model="file.data.content.edited"
+                                  ng-show="!is_previewing"></textarea>
+
+                        <div
+                            id="preview"
+                            ng-bind-html="file.data.content.preview"
+                            ng-show="is_previewing"></div>
+                    </form>
+
+                    <div
+                        ng-bind-html="file.data.content.parsed"
+                        ng-show="!is_editing"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

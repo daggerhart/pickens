@@ -1,55 +1,121 @@
 <?php
-error_reporting( E_ALL );
-ini_set( 'display_errors', 1 );
 
-require '../vendor/autoload.php';
 
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
+require APP_ROOT . '/vendor/autoload.php';
+
+
+function d(){
+	foreach( func_get_args() as $i => $a ){
+		var_dump( $a );
+	}
+}
+
+$app = new \Slim\Slim();
 
 // pickens internal data source
-$config = new \Pickens\Config( parse_ini_file( '../app/pickens.ini', true ) );
-$pickens = new \Pickens\App( $config );
+$config = new \Pickens\Config( parse_ini_file( APP_ROOT . '/pickens.ini', true ) );
+
+$app->container->config = $config;
+$app->container->filesystem = new \Pickens\FileSystem( $config->local['root'], $config->local['ignore'] );
+$app->container->metadata = new \Pickens\TextMetaData( 'ini', "-----\n\n" );
+$app->container->parser = new \Parsedown;
+
+// homepage
+$app->get( '/', function() {
+	include_once PUBLIC_ROOT . "/partials/wrapper.html";
+});
 
 
-// http://www.slimframework.com/docs/features/templates.html
-// Create container
-$container = new \Slim\Container;
+/**
+ *
+ */
+$app->get( '/api/get/file/:path+', function( $path ) use ( $app ) {
+	$relativePath = '/' . ltrim( implode( '/', $path ), '/' );
+	$file = $app->container->filesystem->getFile( $relativePath );
 
-$container['pickens'] = $pickens;
+	if ( $file['isFile'] && $file['mimeType'] == 'text/x-markdown' ) {
+		$data = $app->container->metadata->getDataFromFile( $file['absPath'] );
 
-// markdown parsedown
-$container['parser'] = new \Parsedown;
+		$data['content']['parsed'] = $app->container->parser->text( $data['content']['noMeta'] );
 
-// twig for templating
-$container['view'] = function( $c ) {
-	$view = new \Slim\Views\Twig('../templates/', [
-		//'cache' => '../cache'
-	]);
-	$view->addExtension(new \Slim\Views\TwigExtension(
-		$c['router'],
-		$c['request']->getUri()
-	));
+	    $file['data'] = $data;
+	}
 
-	return $view;
-};
+	$jsonData = json_encode( $file );
 
-$app = new \Slim\App($container);
+	header("Content-Type: application/json");
+	echo $jsonData;
+	exit;
+});
 
-// collections and taxonomies can set their own alias_pattern
-foreach( $pickens->getAliasMap() as $alias => $internal ){
+/**
+ *
+ */
+$app->post( '/api/update/file', function() use ( $app ) {
+	$file = json_decode( $app->request()->getBody() );
+	$app->container->filesystem->updateFileContents( $file->relativePath, $file->data->content->edited );
 
-	$app->get( '/' . $alias, function ( $request, $response, $args ) use ( $pickens, $internal ) {
-		$item = $pickens->internal_routes[ $internal ];
+	$file = $app->container->filesystem->getFile( $file->relativePath );
 
-		if ( $item ){
-			$item->content = $this->parser->text( $item->content_raw );
+	if ( $file['isFile'] && $file['mimeType'] == 'text/x-markdown' ) {
+		$data = $app->container->metadata->getDataFromFile( $file['absPath'] );
+		$data['content']['parsed'] = $app->container->parser->text( $data['content']['noMeta'] );
 
-			return $this->view->render( $response, 'layout.html', (array) $item );
+		$file['data'] = $data;
+	}
+
+	$jsonData = json_encode( $file );
+
+	header("Content-Type: application/json");
+	echo $jsonData;
+
+	exit;
+});
+
+/**
+ *
+ */
+$app->post( '/api/util/preview', function() use ( $app ) {
+	$file = json_decode( $app->request()->getBody() );
+
+	if ( $file->mimeType == 'text/x-markdown' && isset( $file->data->content->edited ) ) {
+		
+		$data = $app->container->metadata->getData( $file->data->content->edited );
+		echo $app->container->parser->text( $data['content']['noMeta'] );
+	}
+	exit;
+});
+
+/**
+ *
+ */
+$app->get( '/api/get/dir/:path', function( $path ) use ( $app ) {
+	d($path);
+	exit;
+});
+
+/**
+ *
+ */
+$app->get( '/api/get/files', function() use ( $app ) {
+	$data = $app->container->filesystem->getFiles( $app->container->config->local['folders'] );
+
+	$files = [];
+
+	/// goofing off with metadata extraction
+	foreach ( $data as $path => $file ){
+		if ( $file['isFile'] && $file['mimeType'] == 'text/x-markdown' ) {
+			$file['data'] = $app->container->metadata->getDataFromFile( $file['absPath'] );
 		}
 
-		return $response;
-	} );
-}
+		$files[ $path ] = $file;
+	}
+
+	$jsonData = json_encode( array_values( $files ) );
+
+	header("Content-Type: application/json");
+	echo $jsonData;
+	exit;
+});
 
 $app->run();

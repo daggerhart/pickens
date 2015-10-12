@@ -6,7 +6,6 @@ class Config {
 	protected $values = array();
 
 	function __construct( $values ){
-		//Utils::d($values);
 		$this->values = $values;
 	}
 

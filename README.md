@@ -7,7 +7,7 @@ A simple File Thingy :tm: written with Slim that allows for editing markdown fil
 
 ### TODO
 
-* Meta Data 
+* Meta Data refactor
     * Markdown
     * Images
     * Videos
@@ -28,3 +28,7 @@ A simple File Thingy :tm: written with Slim that allows for editing markdown fil
 * API
     * GET - file / dir / all
     * POST - file
+* Server
+    * Start & Stop
+* Config
+    * Ignore patterns

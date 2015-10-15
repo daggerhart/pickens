@@ -81,16 +81,13 @@ fileControllers.controller( 'FileController', [ '$scope', '$http', '$stateParams
 
 fileControllers.controller( 'DirController', [ '$scope', '$http', '$stateParams',
     function ( $scope, $http, $stateParams ){
-        $http.get('/api/get/files' ).success(function(data){
+        var path = $stateParams.relativePath;
 
-            var path = $stateParams.relativePath;
+        $http.get('/api/get/dir' + path ).success(function(files){
+            $scope.files = files;
 
-            $scope.files = _.filter( data, function( file ){
-                return ( file.relativePath !== path &&
-                         file.relativePath.indexOf( path ) !== -1 );
-            });
-
-            $scope.dir = _.find( data, _.matchesProperty( 'relativePath', path ) );
+            $scope.dir = path;
+            l(path, $scope.files, $scope.dir );
         });
     }
 ]);

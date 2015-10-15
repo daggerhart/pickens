@@ -28,22 +28,6 @@ class Utils {
 		return array_map( 'trim', $list );
 	}
 
-	static function d( $v, $return = false, $show_caller = true ){
-		$dd = debug_backtrace();
-		array_shift( $dd );
-		$caller = array_shift( $dd );
-		unset($caller['object'], $caller['args'], $caller['type']);
-
-		$output =  $show_caller ? "<pre>Debug Caller:".print_r($caller,1)."</pre>" : '';
-		$output.= "<pre>".print_r($v,1)."</pre>";
-
-		if ( $return ){
-			return $output;
-		}
-
-		echo $output;
-	}
-
 	/**
 	 * https://gist.github.com/Erutan409/8e774dfb2b343fe78b14
 	 *

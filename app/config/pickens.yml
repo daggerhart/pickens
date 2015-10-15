@@ -1,0 +1,12 @@
+filesystems:
+    local:
+        root: ../
+        folders:
+            - Notes
+            - Books
+        ignore:
+            - .DS_Store
+            - .dropbox
+            - .git*
+        ignoreVCS: true
+        ignoreDotFiles: true

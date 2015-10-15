@@ -13,8 +13,8 @@
             <tbody>
                 <tr ng-repeat="file in files">
                     <td>
-                        <a ng-show="file.isFile" ui-sref="fileView({ relativePath: file.relativePath })">{{ file.relativePath }}</a>
-                        <a ng-show="file.isDir" ui-sref="dirView({ relativePath: file.relativePath })">{{ file.relativePath }}</a>
+                        <a ng-show="file.isFile" ui-sref="fileView({ relativePath: file.relativePath })">{{ file.fileName }}</a>
+                        <a ng-show="file.isDir" ui-sref="dirView({ relativePath: file.relativePath })">{{ file.fileName }}</a>
                     </td>
                     <td>{{ file.mimeType }}</td>
                     <td>{{ file.relativeDir }}</td>

@@ -3,23 +3,30 @@
 
 require APP_ROOT . '/vendor/autoload.php';
 
+$debug = true;
 
-function d(){
-	foreach( func_get_args() as $i => $a ){
-		var_dump( $a );
+function d( $v ) {
+	global $debug;
+	if ( $debug ) {
+		dump( $v );
 	}
 }
+
+use Symfony\Component\Yaml\Yaml;
 
 $app = new \Slim\Slim();
 
 // pickens internal data source
-$config = new \Pickens\Config( parse_ini_file( APP_ROOT . '/pickens.ini', true ) );
+//$config = new \Pickens\Config( parse_ini_file( APP_ROOT . '/pickens.ini', true ) );
+$yml = Yaml::Parse( APP_ROOT . '/app/config/pickens.yml' );
+$config = new \Pickens\Config( $yml );
 
 $app->container->config = $config;
-$app->container->filesystem = new \Pickens\FileSystem( $config->local['root'], $config->local['ignore'] );
+$app->container->files = new \Pickens\Files( $config->filesystems['local'] );
 $app->container->metadata = new \Pickens\TextMetaData( 'ini', "-----\n\n" );
 $app->container->parser = new \Parsedown;
 
+//d($app->container);
 // homepage
 $app->get( '/', function() {
 	include_once PUBLIC_ROOT . "/partials/wrapper.html";
@@ -30,8 +37,7 @@ $app->get( '/', function() {
  *
  */
 $app->get( '/api/get/file/:path+', function( $path ) use ( $app ) {
-	$relativePath = '/' . ltrim( implode( '/', $path ), '/' );
-	$file = $app->container->filesystem->getFile( $relativePath );
+	$file = $app->container->files->getFile( implode( '/', $path ) );
 
 	if ( $file['isFile'] && $file['mimeType'] == 'text/x-markdown' ) {
 		$data = $app->container->metadata->getDataFromFile( $file['absPath'] );
@@ -41,11 +47,7 @@ $app->get( '/api/get/file/:path+', function( $path ) use ( $app ) {
 	    $file['data'] = $data;
 	}
 
-	$jsonData = json_encode( $file );
-
-	header("Content-Type: application/json");
-	echo $jsonData;
-	exit;
+	sendJson( $file );
 });
 
 /**
@@ -53,9 +55,9 @@ $app->get( '/api/get/file/:path+', function( $path ) use ( $app ) {
  */
 $app->post( '/api/update/file', function() use ( $app ) {
 	$file = json_decode( $app->request()->getBody() );
-	$app->container->filesystem->updateFileContents( $file->relativePath, $file->data->content->edited );
+	$app->container->files->updateFileContents( $file->relativePath, $file->data->content->edited );
 
-	$file = $app->container->filesystem->getFile( $file->relativePath );
+	$file = $app->container->files->getFile( $file->relativePath );
 
 	if ( $file['isFile'] && $file['mimeType'] == 'text/x-markdown' ) {
 		$data = $app->container->metadata->getDataFromFile( $file['absPath'] );
@@ -64,12 +66,7 @@ $app->post( '/api/update/file', function() use ( $app ) {
 		$file['data'] = $data;
 	}
 
-	$jsonData = json_encode( $file );
-
-	header("Content-Type: application/json");
-	echo $jsonData;
-
-	exit;
+	sendJson( $file );
 });
 
 /**
@@ -79,7 +76,7 @@ $app->post( '/api/util/preview', function() use ( $app ) {
 	$file = json_decode( $app->request()->getBody() );
 
 	if ( $file->mimeType == 'text/x-markdown' && isset( $file->data->content->edited ) ) {
-		
+
 		$data = $app->container->metadata->getData( $file->data->content->edited );
 		echo $app->container->parser->text( $data['content']['noMeta'] );
 	}
@@ -89,17 +86,19 @@ $app->post( '/api/util/preview', function() use ( $app ) {
 /**
  *
  */
-$app->get( '/api/get/dir/:path', function( $path ) use ( $app ) {
-	d($path);
-	exit;
+$app->get( '/api/get/dir/:path+', function( $path ) use ( $app ) {
+	$data = $app->container->files->getFiles( implode( '/', $path ) );
+	sendJson( array_values( $data ) );
 });
 
 /**
  *
  */
 $app->get( '/api/get/files', function() use ( $app ) {
-	$data = $app->container->filesystem->getFiles( $app->container->config->local['folders'] );
+	$data = $app->container->files->getRootFolders();
 
+	//d($folders);
+	//d($data);
 	$files = [];
 
 	/// goofing off with metadata extraction
@@ -111,11 +110,18 @@ $app->get( '/api/get/files', function() use ( $app ) {
 		$files[ $path ] = $file;
 	}
 
-	$jsonData = json_encode( array_values( $files ) );
+	sendJson( array_values( $files ) );
+});
+
+$app->run();
+
+/**
+ * @param $array
+ */
+function sendJson( $array ){
+	$jsonData = json_encode( $array );
 
 	header("Content-Type: application/json");
 	echo $jsonData;
 	exit;
-});
-
-$app->run();
+}

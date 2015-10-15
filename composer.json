@@ -18,7 +18,12 @@
     },
     "require": {
         "erusev/parsedown": "^1.6",
-        "slim/slim": "~2.0"
+        "slim/slim": "~2.0",
+        "symfony/yaml": "^2.7",
+        "symfony/filesystem": "^2.7",
+        "symfony/event-dispatcher": "^2.7",
+        "symfony/finder": "^2.7",
+        "symfony/var-dumper": "^2.7"
     },
     "autoload": {
         "psr-4": { "Pickens\\": "app/" }

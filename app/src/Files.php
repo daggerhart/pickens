@@ -1,31 +1,198 @@
 <?php
-
+/**
+ * - getFile
+ * - getDir
+ * - getDirFiles
+ */
 namespace Pickens;
 
-class Utils {
+use Symfony\Component\Finder\Finder;
+use getID3;
+
+class Files {
+	protected $realRoot;
+	protected $finder;
 
 	/**
-	 * Allow: "_" and lower alphanumeric
+	 * Symfony\Component\Finder\SplFileInfo
 	 *
-	 * @param $string
-	 *
-	 * @return string
+	 * @var
 	 */
-	static function makeSlug( $string ){
-		$string = strtolower( str_replace( array( '-', ' ' ), '_', $string ) );
-		return preg_replace("/[^A-Za-z0-9 ]/", '', $string);
+	public $root;
+
+	// options from config file
+	public $system = [];
+
+	function __construct( $system, $app_root ){
+		$this->system = $system;
+
+		$this->realRoot = realpath( $app_root . '/' . ltrim( $system['root'], '/' ) );
+
+		$finder = $this->newFinder();
+		$finder->directories()
+			->in( dirname( $this->realRoot ) )
+			->name( basename( $this->realRoot ) );
+
+		foreach( $finder as $dir ){
+			$this->root = $dir;
+			break;
+		}
 	}
 
 	/**
-	 * Convert a comma separated list into an array
+	 * @return Finder
+	 */
+	function newFinder(){
+		$finder = new Finder();
+		$finder->depth('== 0');
+		$finder->followLinks( true );
+		$finder->ignoreVCS( $this->system['ignoreVCS'] );
+		$finder->ignoreDotFiles( $this->system['ignoreDotFiles'] );
+		$finder->ignoreUnreadableDirs();
+
+		foreach( $this->system['ignore'] as $ignore ){
+			$finder->notName( $ignore );
+		}
+
+		return $finder;
+	}
+
+	/**
+	 * @param $filePath
 	 *
-	 * @param $csl array - comma separated list
+	 * @return string
+	 */
+	function getRelativePath( $filePath ){
+		$relative = str_replace( $this->realRoot, '', $filePath );
+
+		return $relative;
+	}
+
+	/**
+	 * @param $filePath
+	 *
+	 * @return string
+	 */
+	function getAbsolutePath( $filePath = '' ){
+		$relative = $this->getRelativePath( $filePath );
+		$absolute = $this->realRoot . '/' . ltrim( $relative, '/' );
+
+		return $absolute;
+	}
+
+	/**
+	 * @param $relativePath
 	 *
 	 * @return array
 	 */
-	static function expandCSL( $csl ){
-		$list = explode( ',', $csl );
-		return array_map( 'trim', $list );
+	function getFile( $relativePath ){
+		$absolute = $this->getAbsolutePath( $relativePath );
+		if ( file_exists( $absolute ) ){
+			$finder = new Finder();
+			$finder->in( dirname( $absolute ) )
+			       ->name( basename( $relativePath ) );
+
+			$found = null;
+
+			foreach( $finder as $file ){
+				$found = $this->makeFileArray( $file );
+				break;
+			}
+
+			return $found;
+		}
+
+		return [];
+	}
+
+	/**
+	 * @param $folder
+	 *
+	 * @return array
+	 */
+	function getDirFiles( $folder ) {
+		$finder = $this->newFinder();
+		$finder->in( $this->getAbsolutePath( $folder ) );
+
+		// if no folder given, serve the system folders
+		if ( empty( $folder ) ){
+			foreach( $this->system['folders'] as $folder ){
+				$finder->name( $folder );
+			}
+		}
+
+		$files = [];
+		foreach ( $finder as $file ) {
+			$data = $this->makeFileArray( $file );
+			$files[ $data['RelativePathname'] ] = $data;
+		}
+		return $files;
+	}
+
+	/**
+	 * @param $file
+	 *
+	 * @return array
+	 */
+	function makeFileArray( $file ){
+
+		$methods = [
+			'getATime',
+			'getBasename',
+			'getCTime',
+			'getExtension',
+			'getFilename',
+			'getGroup',
+			'getInode',
+			'getMTime',
+			'getOwner',
+			'getPath',
+			'getPathInfo',
+			'getPathname',
+			'getPerms',
+			'getRealPath',
+			'getSize',
+			'getType',
+			'isDir',
+			'isExecutable',
+			'isFile',
+			'isLink',
+			'isReadable',
+			'isWritable',
+		];
+
+		$fileData = [];
+		foreach( $methods as $method ){
+			$detail = ltrim( $method, 'get' );
+			$fileData[ $detail ] = $file->{ $method }();
+		}
+
+		$fileData['RelativePathname'] = $this->getRelativePath( $file->getRealPath() );
+		$fileData['RelativePath'] = dirname( $fileData['RelativePathname'] );
+
+		if ( $file->isFile() ) {
+			$fileData['Mimetype'] = $this->mimeType( $file->getRealPath() );
+			$fileData['Filesize'] = $file->getSize();
+		}
+
+		if ( $file->isLink() ) {
+			$fileData['LinkTarget'] = $file->getLinkTarget();
+		}
+
+		return $fileData;
+	}
+
+	/**
+	 * @param $relativePath
+	 * @param $newContent
+	 */
+	function updateFileContents( $relativePath, $newContent ){
+		$filePath = $this->getAbsolutePath( $relativePath );
+
+
+		if ( file_exists( $filePath ) ){
+			file_put_contents( $filePath, $newContent );
+		}
 	}
 
 	/**
@@ -734,6 +901,7 @@ class Utils {
 			"xwd"			=>	"image/x-xwindowdump",
 			"xyz"			=>	"chemical/x-xyz",
 			"yaml"			=>	"text/yaml",
+			"yml"			=>	"text/yaml",
 			"yang"			=>	"application/yang",
 			"yin"			=>	"application/yin+xml",
 			"zaz"			=>	"application/vnd.zzazz.deck+xml",

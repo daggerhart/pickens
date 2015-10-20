@@ -1,13 +1,13 @@
 <div class="file-details" ng-model="files">
 
+    <a ui-sref="dirView({ relativePath: file.RelativePath })">{{ file.RelativePath }}</a>
+
     <div class="page-header">
-        <h1>{{ file.fileName }} <small>({{ file.fileSize | bytes }})</small></h1>
+        <h1>{{ file.Filename }} <small>({{ file.Filesize | bytes }})</small></h1>
     </div>
 
     <div class="row">
         <div class="col-sm-3">
-            <a href="/#list">&laquo; Back to list</a>
-
             <h3>Meta Data</h3>
             <div class="meta-data list-group">
                 <div class="list-group-item" ng-repeat="(key, value) in file.data.meta">
@@ -21,15 +21,15 @@
             <div class="file-info list-group">
                 <div class="list-group-item">
                     <h4 class="list-group-item-heading">Mime Type</h4>
-                    <p class="list-group-item-text">{{ file.mimeType }}</p>
+                    <p class="list-group-item-text">{{ file.Mimetype }}</p>
                 </div>
                 <div class="list-group-item">
                     <h4 class="list-group-item-heading">Modified</h4>
-                    <p class="list-group-item-text">{{ file.modified * 1000 | date:'medium'}}</p>
+                    <p class="list-group-item-text">{{ file.MTime * 1000 | date:'medium'}}</p>
                 </div>
                 <div class="list-group-item">
                     <h4 class="list-group-item-heading">File Size</h4>
-                    <p class="list-group-item-text">{{ file.fileSize | bytes }}</p>
+                    <p class="list-group-item-text">{{ file.Filesize | bytes }}</p>
                 </div>
             </div>
         </div>
@@ -62,7 +62,7 @@
 
             <div class="panel panel-default" ng-class="{ 'panel-warning' : (is_editing && !is_saved), 'panel-success' : is_saved }">
                 <div class="panel-heading">
-                    <h3 class="panel-title">{{ file.relativePath }}</h3>
+                    <h3 class="panel-title">{{ file.Filename }}</h3>
                 </div>
 
                 <div class="panel-body">

@@ -2,13 +2,13 @@
 
     <div class="row">
         <div class="col-sm-12">
-            <h1>{{ dir.relativePath }}</h1>
+            <h1>{{ dir.RelativePathname }}</h1>
         </div>
     </div>
 
     <div class="row">
         <div class="col-sm-3">
-            <a href="/#list">&laquo; Back to list</a>
+
 
             <h3>Details</h3>
             <div class="meta-data list-group">
@@ -23,14 +23,14 @@
         <div class="col-sm-9">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">{{ dir.fileName }}</h3>
+                    <h3 class="panel-title">{{ dir.RelativePathname }}</h3>
                 </div>
 
                 <div class="panel-body">
                     <ul class="list-group">
                         <li class="list-group-item" ng-repeat="file in files">
-                            <a ng-show="file.isFile" ui-sref="fileView({ relativePath: file.relativePath })">{{ file.relativePath | handleFilePath: file: dir }}</a>
-                            <a ng-show="file.isDir" ui-sref="dirView({ relativePath: file.relativePath })">{{ file.relativePath }}</a>
+                            <a ng-show="file.isFile" ui-sref="fileView({ relativePath: file.RelativePathname })">{{ file.Filename | handleFilePath: file: dir }}</a>
+                            <a ng-show="file.isDir" ui-sref="dirView({ relativePath: file.RelativePathname })">{{ file.Filename }}</a>
                         </li>
                     </ul>
                 </div>

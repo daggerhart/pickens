@@ -1,6 +1,9 @@
 <?php
 
+
 namespace Pickens;
+
+use Symfony\Component\Yaml\Yaml;
 
 class TextMetaData {
 	// ini | json
@@ -49,13 +52,10 @@ class TextMetaData {
 		if ( $file_contents ){
 			$data = explode( $this->delimiter, $file_contents );
 
-			$meta = $this->parseMetaData( $this->format, $data[0] );
-
-			// if no metadata array was found, then the whole thing is content
-			if ( is_array( $meta ) ){
+			if ( count( $data ) > 1 ) {
+				$meta = $this->parseMetaData( $this->format, $data[0] );
 				array_shift( $data );
 			}
-			// otherwise, remove the meta data from the content
 			else {
 				$meta = [];
 			}
@@ -84,6 +84,9 @@ class TextMetaData {
 		}
 		else if ( $format === 'json' ){
 			return json_decode( $data );
+		}
+		else if ( $format == 'yaml' || $format == 'yml' ){
+			return Yaml::parse( $data );
 		}
 		else {
 			return false;

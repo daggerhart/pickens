@@ -1,7 +1,7 @@
 var fileControllers = angular.module( 'FileControllers', [] );
 
 fileControllers.controller( 'ListController', [ '$scope', '$http' ,  function ( $scope, $http ){
-    $http.get('/api/get/files' ).success(function(files){
+    $http.get('/api/root/get' ).success(function(files){
         $scope.files = files;
     });
 }]);
@@ -19,8 +19,6 @@ fileControllers.controller( 'FileController', [ '$scope', '$http', '$stateParams
             // copy the content so we can edit it easily
             file.data.content.edited = file.data.content.full;
             $scope.file = file;
-
-            l('file', file );
         }
 
         //
@@ -33,7 +31,7 @@ fileControllers.controller( 'FileController', [ '$scope', '$http', '$stateParams
         // first run
         $scope.init = function(){
             // init: get the file data from the server
-            $http.get('/api/get/file' + path )
+            $http.get('/api/file/get' + path )
                 .success( getFile );
 
             $scope.resetFlags();
@@ -43,7 +41,7 @@ fileControllers.controller( 'FileController', [ '$scope', '$http', '$stateParams
         // submit the edited content to the server
         $scope.submit = function(){
             if ($scope.file) {
-                $http.post( '/api/update/file', $scope.file )
+                $http.post( '/api/file/update', $scope.file )
                     .success( getFile )
                     .success( function(){
                         $scope.is_saved = true;
@@ -66,9 +64,9 @@ fileControllers.controller( 'FileController', [ '$scope', '$http', '$stateParams
         // preview certain types of files
         $scope.preview = function(){
             if ( $scope.file ) {
-                $http.post( '/api/util/preview', $scope.file )
+                $http.post( '/api/file/preview', $scope.file )
                     .success(function( response ){
-                        $scope.file.data.content.preview = $sce.trustAsHtml( response );
+                        $scope.file.data.content.preview = $sce.trustAsHtml( response.html );
                     });
             }
         };
@@ -83,11 +81,9 @@ fileControllers.controller( 'DirController', [ '$scope', '$http', '$stateParams'
     function ( $scope, $http, $stateParams ){
         var path = $stateParams.relativePath;
 
-        $http.get('/api/get/dir' + path ).success(function(files){
-            $scope.files = files;
-
-            $scope.dir = path;
-            l(path, $scope.files, $scope.dir );
+        $http.get('/api/dir/get' + path ).success(function(data){
+            $scope.files = data.files;
+            $scope.dir = data.dir;
         });
     }
 ]);
